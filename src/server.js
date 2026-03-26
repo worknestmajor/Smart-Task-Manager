@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 5000;
 async function testDB() {
   try {
     const users = await prisma.user.findMany();
-    console.log("Prisma connected. Users:", users);
+    console.log("Prisma connected. Users:", users.length);
   } catch (err) {
     console.error("Prisma error:", err.message);
   }
