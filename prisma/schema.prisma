@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  projects  Project[]
+  tasks     Task[]
+  assignments TaskAssignment[]
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  user   User   @relation(fields: [createdBy], references: [id])
+  tasks  Task[]
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus @default(PENDING)
+  dueDate     DateTime?
+  createdAt   DateTime @default(now())
+
+  projectId String
+  createdBy String
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [createdBy], references: [id])
+
+  assignments TaskAssignment[]
+
+  dependencies     TaskDependency[] @relation("TaskDependencies")
+  dependentOn      TaskDependency[] @relation("DependentTasks")
+}
+
+model TaskAssignment {
+  id     String @id @default(uuid())
+
+  taskId String
+  userId String
+
+  task Task @relation(fields: [taskId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([taskId, userId])
+}
+
+model TaskDependency {
+  id String @id @default(uuid())
+
+  taskId           String
+  dependsOnTaskId  String
+
+  task Task @relation("TaskDependencies", fields: [taskId], references: [id])
+  dependsOn Task @relation("DependentTasks", fields: [dependsOnTaskId], references: [id])
+
+  @@unique([taskId, dependsOnTaskId])
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+}
